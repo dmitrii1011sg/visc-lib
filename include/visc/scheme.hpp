@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <memory>
 
 #include "matrix.hpp"
@@ -34,5 +35,62 @@ class Naive2x2 : public Scheme
 
     Matrix getWhiteMatrix() const override;
     Matrix getBlackMatrix() const override;
+};
+
+class GeneralKoutK : public Scheme
+{
+   public:
+    GeneralKoutK(size_t k);
+
+    size_t getK() const override
+    {
+        return k_;
+    }
+    size_t getN() const override
+    {
+        return k_;
+    }
+    size_t getM() const override
+    {
+        return m_;
+    }
+
+    Matrix getWhiteMatrix() const override;
+    Matrix getBlackMatrix() const override;
+
+   private:
+    size_t k_;
+    size_t m_;
+    Matrix m_white_;
+    Matrix m_black_;
+
+    void generateMatrices();
+};
+
+class GeneralKoutN : public Scheme
+{
+   public:
+    GeneralKoutN(size_t k, size_t n);
+
+    size_t getK() const override
+    {
+        return k_;
+    }
+    size_t getN() const override
+    {
+        return n_;
+    }
+    size_t getM() const override
+    {
+        return m_;
+    }
+
+    Matrix getWhiteMatrix() const override;
+    Matrix getBlackMatrix() const override;
+
+   private:
+    size_t k_, n_, m_;
+    Matrix m_white_, m_black_;
+    void generateMatrices();
 };
 }  // namespace visc

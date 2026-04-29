@@ -15,6 +15,10 @@ visc_encoder_t* visc_create_encoder(int k, int n)
 
     if (k == 2 && n == 2) {
         handle->scheme = std::make_shared<visc::Naive2x2>();
+    } else if (k == n && k > 2) {
+        handle->scheme = std::make_shared<visc::GeneralKoutK>(k);
+    } else {
+        handle->scheme = std::make_shared<visc::GeneralKoutN>(k, n);
     }
 
     handle->encoder = std::make_unique<visc::Encoder>(handle->scheme);
@@ -36,5 +40,14 @@ void visc_encode(visc_encoder_t* handle, const uint8_t* input, int width, int he
 void visc_destroy_encoder(visc_encoder_t* handle)
 {
     delete handle;
+}
+
+int visc_get_m(visc_encoder_t* handle)
+{
+    return static_cast<int>(handle->scheme->getM());
+}
+int visc_get_n(visc_encoder_t* handle)
+{
+    return static_cast<int>(handle->scheme->getN());
 }
 }

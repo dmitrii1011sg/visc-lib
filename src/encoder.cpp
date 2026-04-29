@@ -1,5 +1,8 @@
 #include "visc/encoder.hpp"
 
+#include <chrono>
+#include <iostream>
+
 namespace visc {
 Encoder::Encoder(std::shared_ptr<Scheme> scheme) : scheme_(scheme)
 {
@@ -10,17 +13,18 @@ Encoder::Encoder(std::shared_ptr<Scheme> scheme) : scheme_(scheme)
 std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& input_pixels,
                                                     int width, int height)
 {
+    auto start = std::chrono::high_resolution_clock::now();
     size_t n = scheme_->getN();
     size_t m = scheme_->getM();
 
-    int scale = static_cast<int>(std::sqrt(m));
-    int new_width = width * scale;
-    int new_height = height * scale;
+    int scale_w = static_cast<int>(std::sqrt(m));
+    while (m % scale_w != 0 && scale_w > 1) {
+        scale_w--;
+    }
+    int scale_h = m / scale_w;
 
-    // std::vector<std::vector<uint8_t>> shares(n);
-    // for (auto& share : shares) {
-    //     share.reserve(input_pixels.size() * m);
-    // }
+    int new_width = width * scale_w;
+    int new_height = height * scale_h;
 
     std::vector<std::vector<uint8_t>> shares(n, std::vector<uint8_t>(new_width * new_height));
 
@@ -38,34 +42,20 @@ std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& 
             for (size_t i = 0; i < n; ++i) {
                 std::vector<uint8_t> row = current_matrix.getRow(i);
 
-                // Раскладываем строку субпикселей (row) в блок scale x scale
                 for (int sub_idx = 0; sub_idx < m; ++sub_idx) {
-                    int dx = sub_idx % scale;
-                    int dy = sub_idx / scale;
+                    int dx = sub_idx % scale_w;
+                    int dy = sub_idx / scale_w;
 
-                    // Вычисляем финальный индекс в плоском массиве доли
-                    size_t out_idx = (y * scale + dy) * new_width + (x * scale + dx);
-
+                    size_t out_idx = (y * scale_h + dy) * new_width + (x * scale_w + dx);
                     shares[i][out_idx] = (row[sub_idx] == 1 ? 0 : 255);
                 }
             }
         }
     }
 
-    // for (uint8_t pixel : input_pixels) {
-    //     bool is_white = (pixel > 128);
-
-    //     Matrix current_matrix = is_white ? m_white : m_black;
-
-    //     current_matrix.permuteColumns(rng_);
-
-    //     for (size_t i = 0; i < n; ++i) {
-    //         std::vector<uint8_t> row = current_matrix.getRow(i);
-    //         for (uint8_t val : row) {
-    //             shares[i].push_back(val == 1 ? 0 : 255);
-    //         }
-    //     }
-    // }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "visc: encoding time: " << diff.count() << " s" << std::endl;
 
     return shares;
 }
