@@ -29,7 +29,10 @@ std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& 
     int new_width = width * scale_w;
     int new_height = height * scale_h;
 
-    std::vector<std::vector<uint8_t>> shares(n, std::vector<uint8_t>(new_width * new_height));
+    size_t total_subpixels = static_cast<size_t>(new_width) * new_height;
+    size_t num_bytes = (total_subpixels + 7) / 8;
+
+    std::vector<std::vector<uint8_t>> shares(n, std::vector<uint8_t>(num_bytes, 0));
 
     Matrix m_white = scheme_->getWhiteMatrix();
     Matrix m_black = scheme_->getBlackMatrix();
@@ -60,7 +63,16 @@ std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& 
                         size_t out_idx = (y * scale_h + dy) * new_width + (x * scale_w + dx);
 
                         size_t actual_col = current_matrix.getColumnIdx(sub_idx);
-                        shares[i][out_idx] = (row_span[actual_col] == 1 ? 0 : 255);
+
+                        if (row_span[actual_col] == 1) {
+                            size_t byte_idx = out_idx / 8;
+                            size_t bit_idx = out_idx % 8;
+
+                            uint8_t mask = (1 << (7 - bit_idx));
+
+#pragma omp atomic
+                            shares[i][byte_idx] |= mask;
+                        }
                     }
                 }
             }
