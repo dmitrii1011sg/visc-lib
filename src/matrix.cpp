@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 
 namespace visc {
@@ -11,21 +12,24 @@ Matrix::Matrix(size_t rows, size_t cols, const std::vector<uint8_t>& data)
     if (data.size() != rows * cols) {
         throw std::invalid_argument("Data size does not match matrix dimensions");
     }
+
+    column_indices_.resize(cols_);
+    std::iota(column_indices_.begin(), column_indices_.end(), 0);
 }
 
 void Matrix::permuteColumns(std::mt19937& rng)
 {
-    std::vector<size_t> col_indices(cols_);
-    std::iota(col_indices.begin(), col_indices.end(), 0);
-    std::shuffle(col_indices.begin(), col_indices.end(), rng);
+    std::shuffle(column_indices_.begin(), column_indices_.end(), rng);
+}
 
-    std::vector<uint8_t> new_data(rows_ * cols_);
-    for (size_t r = 0; r < rows_; ++r) {
-        for (size_t c = 0; c < cols_; ++c) {
-            new_data[r * cols_ + c] = data_[r * cols_ + col_indices[c]];
-        }
-    }
-    data_ = std::move(new_data);
+std::span<const uint8_t> Matrix::getRowData(size_t row_index) const
+{
+    return std::span<const uint8_t>(data_.data() + row_index * cols_, cols_);
+}
+
+size_t Matrix::getColumnIdx(size_t col_pos) const
+{
+    return column_indices_[col_pos];
 }
 
 std::vector<uint8_t> Matrix::getRow(size_t index) const

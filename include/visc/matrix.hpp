@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <random>
+#include <span>
 #include <vector>
 
 namespace visc {
@@ -12,6 +13,10 @@ class Matrix
     void permuteColumns(std::mt19937& rng);
 
     std::vector<uint8_t> getRow(size_t index) const;
+
+    std::span<const uint8_t> getRowData(size_t row_index) const;
+
+    size_t getColumnIdx(size_t col_pos) const;
 
     size_t getRows() const
     {
@@ -26,5 +31,6 @@ class Matrix
     size_t rows_;
     size_t cols_;
     std::vector<uint8_t> data_;
+    std::vector<size_t> column_indices_;
 };
 }  // namespace visc
