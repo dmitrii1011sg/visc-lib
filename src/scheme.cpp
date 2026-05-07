@@ -1,6 +1,57 @@
 #include "visc/scheme.hpp"
 
 namespace visc {
+TilborgKoutK::TilborgKoutK(size_t k, size_t c) : k_(k), c_(c)
+{
+    if (k < 2) throw std::invalid_argument("k must be >= 2");
+    if (c < 2) throw std::invalid_argument("c must be >= 2");
+
+    m_ = 1;
+    for (size_t i = 0; i < k_ - 1; ++i) {
+        m_ *= c_;
+    }
+
+    generateMatrices();
+}
+
+void TilborgKoutK::generateMatrices()
+{
+    color_matrices_.clear();
+    color_matrices_.reserve(c_);
+
+    for (size_t current_color = 0; current_color < c_; ++current_color) {
+        std::vector<uint8_t> data(k_ * m_, 0);
+
+        for (size_t col = 0; col < m_; ++col) {
+            size_t temp = col;
+            long long column_sum = 0;
+
+            for (size_t row = 0; row < k_ - 1; ++row) {
+                uint8_t val = temp % c_;
+                data[row * m_ + col] = val;
+
+                column_sum += val;
+                temp /= c_;
+            }
+
+            long long last_val =
+                ((current_color - column_sum) % static_cast<long long>(c_) + c_) % c_;
+
+            data[(k_ - 1) * m_ + col] = static_cast<uint8_t>(last_val);
+        }
+
+        color_matrices_.emplace_back(k_, m_, data);
+    }
+}
+
+Matrix TilborgKoutK::getMatrixForColor(size_t color_index) const
+{
+    if (color_index >= c_) {
+        throw std::out_of_range("Color index out of bounds");
+    }
+    return color_matrices_[color_index];
+}
+
 Matrix Naive2x2::getWhiteMatrix() const
 {
     std::vector<uint8_t> data = {1, 0, 1, 0, 1, 0, 1, 0};

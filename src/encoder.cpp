@@ -13,6 +13,13 @@ Encoder::Encoder(std::shared_ptr<Scheme> scheme) : scheme_(scheme)
     rng_ = std::mt19937(rd());
 }
 
+Encoder::Encoder(std::shared_ptr<ColorScheme> color_scheme)
+    : scheme_(nullptr), color_scheme_(color_scheme)
+{
+    std::random_device rd;
+    rng_ = std::mt19937(rd());
+}
+
 std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& input_pixels,
                                                     int width, int height)
 {
@@ -82,6 +89,77 @@ std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
     std::cout << "visc: encoding time: " << diff.count() << " s" << std::endl;
+
+    return shares;
+}
+
+std::vector<std::vector<uint8_t>> Encoder::encodeColor(const std::vector<uint8_t>& input_indices,
+                                                       int width, int height)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+
+    if (!color_scheme_) {
+        throw std::runtime_error("Color scheme is not initialized");
+    }
+
+    size_t n = color_scheme_->getN();
+    size_t m = color_scheme_->getM();
+    size_t c = color_scheme_->getC();
+
+    int scale_w = static_cast<int>(std::sqrt(m));
+    while (m % scale_w != 0 && scale_w > 1) {
+        scale_w--;
+    }
+    int scale_h = m / scale_w;
+
+    int new_width = width * scale_w;
+    int new_height = height * scale_h;
+
+    std::vector<std::vector<uint8_t>> shares(n, std::vector<uint8_t>(new_width * new_height, 0));
+
+    std::vector<Matrix> color_matrices;
+    color_matrices.reserve(c);
+    for (size_t i = 0; i < c; ++i) {
+        color_matrices.push_back(color_scheme_->getMatrixForColor(i));
+    }
+
+#pragma omp parallel
+    {
+        std::random_device rd;
+        std::mt19937 thread_rng(rd() ^ omp_get_thread_num());
+
+        std::vector<Matrix> local_matrices = color_matrices;
+
+#pragma omp for collapse(2)
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                uint8_t color_idx = input_indices[y * width + x];
+
+                if (color_idx >= c) color_idx = 0;
+
+                Matrix& current_matrix = local_matrices[color_idx];
+                current_matrix.permuteColumns(thread_rng);
+
+                for (size_t i = 0; i < n; ++i) {
+                    auto row_span = current_matrix.getRowData(i);
+
+                    for (int sub_idx = 0; sub_idx < m; ++sub_idx) {
+                        int dx = sub_idx % scale_w;
+                        int dy = sub_idx / scale_w;
+
+                        size_t out_idx = (y * scale_h + dy) * new_width + (x * scale_w + dx);
+                        size_t actual_col = current_matrix.getColumnIdx(sub_idx);
+
+                        shares[i][out_idx] = row_span[actual_col];
+                    }
+                }
+            }
+        }
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "[C++ Backend] Color Encoding time: " << diff.count() << " s\n";
 
     return shares;
 }

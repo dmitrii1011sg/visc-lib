@@ -5,6 +5,54 @@
 #include "matrix.hpp"
 
 namespace visc {
+class ColorScheme
+{
+   public:
+    virtual ~ColorScheme() = default;
+
+    virtual size_t getK() const = 0;
+    virtual size_t getN() const = 0;
+    virtual size_t getM() const = 0;
+
+    virtual size_t getC() const = 0;
+
+    virtual Matrix getMatrixForColor(size_t color_index) const = 0;
+};
+
+class TilborgKoutK : public ColorScheme
+{
+   public:
+    TilborgKoutK(size_t k, size_t c);
+
+    size_t getK() const override
+    {
+        return k_;
+    }
+    size_t getN() const override
+    {
+        return k_;
+    }
+    size_t getM() const override
+    {
+        return m_;
+    }
+    size_t getC() const override
+    {
+        return c_;
+    }
+
+    Matrix getMatrixForColor(size_t color_index) const override;
+
+   private:
+    size_t k_;
+    size_t c_;
+    size_t m_;
+
+    std::vector<Matrix> color_matrices_;
+
+    void generateMatrices();
+};
+
 class Scheme
 {
    public:

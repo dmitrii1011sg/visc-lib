@@ -23,7 +23,7 @@ target_include_directories(visc PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# set_target_properties(visc PROPERTIES
-#     CXX_VISIBILITY_PRESET hidden
-#     VISIBILITY_INLINES_HIDDEN 1
-# )
+set_target_properties(visc PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN 1
+)
