@@ -1,4 +1,4 @@
-#include "visc/matrix.hpp"
+#include "visc/core/matrix.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 namespace visc {
+
 Matrix::Matrix(size_t rows, size_t cols, const std::vector<uint8_t>& data)
     : rows_(rows), cols_(cols), data_(data)
 {
@@ -38,4 +39,5 @@ std::vector<uint8_t> Matrix::getRow(size_t index) const
     auto start = data_.begin() + index * cols_;
     return std::vector<uint8_t>(start, start + cols_);
 }
+
 }  // namespace visc

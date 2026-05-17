@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace visc {
+
 class Matrix
 {
    public:
@@ -28,9 +29,9 @@ class Matrix
     }
 
    private:
-    size_t rows_;
-    size_t cols_;
+    size_t rows_, cols_;
     std::vector<uint8_t> data_;
     std::vector<size_t> column_indices_;
 };
+
 }  // namespace visc
