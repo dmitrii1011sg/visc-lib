@@ -25,6 +25,10 @@ VISC_API void visc_destroy_encoder(visc_encoder_t* encoder);
 VISC_API int visc_get_m(visc_encoder_t* handle);
 VISC_API int visc_get_n(visc_encoder_t* handle);
 
+VISC_API visc_encoder_t* visc_create_colored_encoder(int k, int n, int num_colors);
+VISC_API void visc_encode_color(visc_encoder_t* handle, const uint8_t* input, int width, int height,
+                                uint8_t** output_shares);
+
 #ifdef __cplusplus
 }
 #endif

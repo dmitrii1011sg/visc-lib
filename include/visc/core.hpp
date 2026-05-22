@@ -7,6 +7,7 @@
 #include "visc/scheme/naive_2x2.hpp"
 #include "visc/scheme/naor_shamir_k_k.hpp"
 #include "visc/scheme/naor_shamir_phf_k_n.hpp"
+#include "visc/scheme/yang_laih_colored.hpp"
 
 namespace visc {
 

@@ -87,4 +87,55 @@ std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& 
     return shares;
 }
 
+std::vector<std::vector<uint8_t>> Encoder::encodeColor(const std::vector<uint8_t>& input_indices,
+                                                       int width, int height)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+    auto colored_scheme = std::dynamic_pointer_cast<YangLaihColored>(scheme_);
+    if (!colored_scheme) throw std::runtime_error("Current scheme is not colored");
+
+    size_t n = colored_scheme->getN();
+    size_t m = colored_scheme->getM();
+
+    int scale_w = static_cast<int>(std::sqrt(m));
+    while (m % scale_w != 0 && scale_w > 1) scale_w--;
+    int scale_h = m / scale_w;
+
+    int new_width = width * scale_w;
+    int new_height = height * scale_h;
+    std::vector<std::vector<uint8_t>> shares(n, std::vector<uint8_t>(new_width * new_height, 0));
+
+#pragma omp parallel
+    {
+        std::random_device rd;
+        std::mt19937 thread_rng(rd() ^ omp_get_thread_num());
+
+#pragma omp for collapse(2)
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                uint8_t color_idx = input_indices[y * width + x];
+                Matrix current_matrix = colored_scheme->getColorMatrix(color_idx);
+                current_matrix.permuteColumns(thread_rng);
+
+                for (size_t i = 0; i < n; ++i) {
+                    auto row_span = current_matrix.getRowData(i);
+                    for (int sub_idx = 0; sub_idx < m; ++sub_idx) {
+                        int dx = sub_idx % scale_w;
+                        int dy = sub_idx / scale_w;
+                        size_t out_idx = (y * scale_h + dy) * new_width + (x * scale_w + dx);
+                        size_t actual_col = current_matrix.getColumnIdx(sub_idx);
+
+                        shares[i][out_idx] = row_span[actual_col];
+                    }
+                }
+            }
+        }
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "visc: encoding time: " << diff.count() << " s" << std::endl;
+
+    return shares;
+}
+
 }  // namespace visc

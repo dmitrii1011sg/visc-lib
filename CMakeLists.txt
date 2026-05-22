@@ -14,6 +14,7 @@ set(SOURCES
     src/scheme/naor_shamir_k_k.cpp
     src/scheme/naor_shamir_phf_k_n.cpp
     src/scheme/verheul_tilborg_k_n.cpp
+    src/scheme/yang_laih_colored.cpp
     src/encoder.cpp
     src/c_api.cpp
 )
