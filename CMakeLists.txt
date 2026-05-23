@@ -29,7 +29,8 @@ if(EMSCRIPTEN)
         "-sALLOW_MEMORY_GROWTH=1"
         "-sMODULARIZE=1"
         "-sEXPORT_ES6=1"
-        "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','_malloc','_free']"
+        "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','HEAPU8','HEAP32']"
+        "-sEXPORTED_FUNCTIONS=['_malloc','_free','_visc_create_encoder','_visc_destroy_encoder','_visc_get_m','_visc_get_n','_visc_encode','_visc_create_colored_encoder','_visc_encode_color']"
     )
 
     set_target_properties(visc PROPERTIES SUFFIX ".js")
