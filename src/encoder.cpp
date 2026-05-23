@@ -1,6 +1,8 @@
 #include "visc/encoder.hpp"
 
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include <chrono>
 #include <iostream>
@@ -40,7 +42,12 @@ std::vector<std::vector<uint8_t>> Encoder::encodeBW(const std::vector<uint8_t>& 
 #pragma omp parallel
     {
         std::random_device rd;
-        std::mt19937 thread_rng(rd() ^ omp_get_thread_num());
+        unsigned int thread_id = 0;
+#ifdef _OPENMP
+        thread_id = static_cast<unsigned int>(omp_get_thread_num());
+#endif
+
+        std::mt19937 thread_rng(rd() ^ thread_id);
 
         Matrix local_white = m_white;
         Matrix local_black = m_black;
@@ -108,7 +115,11 @@ std::vector<std::vector<uint8_t>> Encoder::encodeColor(const std::vector<uint8_t
 #pragma omp parallel
     {
         std::random_device rd;
-        std::mt19937 thread_rng(rd() ^ omp_get_thread_num());
+        unsigned int thread_id = 0;
+#ifdef _OPENMP
+        thread_id = static_cast<unsigned int>(omp_get_thread_num());
+#endif
+        std::mt19937 thread_rng(rd() ^ thread_id);
 
 #pragma omp for collapse(2)
         for (int y = 0; y < height; ++y) {

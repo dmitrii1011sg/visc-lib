@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 
-#if defined(_WIN32)
+#if defined(__EMSCRIPTEN__)
+#include <emscripten/emscripten.h>
+#define VISC_API EMSCRIPTEN_KEEPALIVE
+#elif defined(_WIN32)
 #define VISC_API __declspec(dllexport)
 #else
 #define VISC_API __attribute__((visibility("default")))

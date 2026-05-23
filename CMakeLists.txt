@@ -19,18 +19,36 @@ set(SOURCES
     src/c_api.cpp
 )
 
-find_package(OpenMP REQUIRED)
+if(EMSCRIPTEN)
+    message(STATUS "WebAssembly build (Emscripten)")
 
-add_library(visc SHARED ${SOURCES})
+    add_executable(visc ${SOURCES})
 
-target_link_libraries(visc PRIVATE OpenMP::OpenMP_CXX)
+    target_link_options(visc PRIVATE
+        "-sWASM=1"
+        "-sALLOW_MEMORY_GROWTH=1"
+        "-sMODULARIZE=1"
+        "-sEXPORT_ES6=1"
+        "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','_malloc','_free']"
+    )
+
+    set_target_properties(visc PROPERTIES SUFFIX ".js")
+else()
+    message(STATUS "Native build (Shared Library)")
+
+    find_package(OpenMP REQUIRED)
+    
+    add_library(visc SHARED ${SOURCES})
+    
+    target_link_libraries(visc PRIVATE OpenMP::OpenMP_CXX)
+
+    set_target_properties(visc PROPERTIES
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN 1
+    )
+endif()
 
 target_include_directories(visc PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-)
-
-set_target_properties(visc PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN 1
 )
